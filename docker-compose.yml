@@ -13,8 +13,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    volumes:
-      - stats-db-data:/var/lib/postgresql/data
 
   stats-server:
     build: ./stats/stats-server
@@ -29,11 +27,6 @@ services:
       SPRING_DATASOURCE_USERNAME: stats_user
       SPRING_DATASOURCE_PASSWORD: stats_password
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   ewm-db:
     image: postgres:16.1
@@ -49,8 +42,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    volumes:
-      - ewm-db-data:/var/lib/postgresql/data
 
   ewm-service:
     build: ./ewm-service
@@ -61,18 +52,6 @@ services:
       ewm-db:
         condition: service_healthy
       stats-server:
-        condition: service_healthy
+        condition: service_started
     environment:
       STATS_SERVER_URL: http://stats-server:9090
-      SPRING_DATASOURCE_URL: jdbc:postgresql://ewm-db:5432/ewm
-      SPRING_DATASOURCE_USERNAME: ewm_user
-      SPRING_DATASOURCE_PASSWORD: ewm_password
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  stats-db-data:
-  ewm-db-data:
