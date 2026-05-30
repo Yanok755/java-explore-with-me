@@ -13,20 +13,28 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - explore-with-me-network
 
   stats-server:
-    build: ./stats/stats-server
+    image: eclipse-temurin:21-jre-jammy
     container_name: stats-server
     ports:
       - "9090:9090"
     depends_on:
       stats-db:
         condition: service_healthy
+    working_dir: /app
+    volumes:
+      - ./stats/stats-server/target:/app
+    command: java -jar /app/stats-server-*.jar
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/stats
       SPRING_DATASOURCE_USERNAME: stats_user
       SPRING_DATASOURCE_PASSWORD: stats_password
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    networks:
+      - explore-with-me-network
 
   ewm-db:
     image: postgres:16.1
@@ -42,9 +50,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - explore-with-me-network
 
   ewm-service:
-    build: ./ewm-service
+    image: eclipse-temurin:21-jre-jammy
     container_name: ewm-service
     ports:
       - "8080:8080"
@@ -53,5 +63,15 @@ services:
         condition: service_healthy
       stats-server:
         condition: service_started
+    working_dir: /app
+    volumes:
+      - ./ewm-service/target:/app
+    command: java -jar /app/ewm-service-*.jar
     environment:
       STATS_SERVER_URL: http://stats-server:9090
+    networks:
+      - explore-with-me-network
+
+networks:
+  explore-with-me-network:
+    driver: bridge
