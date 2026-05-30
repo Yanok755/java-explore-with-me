@@ -46,10 +46,10 @@ jobs:
           fi
       
       - name: Build Docker images
-        run: docker-compose build
+        run: docker compose build
       
       - name: Start Docker Compose
-        run: docker-compose up -d
+        run: docker compose up -d
       
       - name: Wait for services
         run: |
@@ -76,8 +76,8 @@ jobs:
       
       - name: Show logs on failure
         if: failure()
-        run: docker-compose logs
+        run: docker compose logs
       
       - name: Stop Docker Compose
         if: always()
-        run: docker-compose down
+        run: docker compose down
