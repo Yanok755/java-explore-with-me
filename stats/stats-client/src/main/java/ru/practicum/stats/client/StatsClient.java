@@ -1,74 +1,47 @@
-package ru.practicum.stats.client;
+package ru.practicum.ewm.stats.client;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
-import ru.practicum.stats.dto.EndpointHit;
-import ru.practicum.stats.dto.ViewStats;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
+import ru.practicum.ewm.stats.dto.EndpointHitDto;
+import ru.practicum.ewm.stats.dto.ViewStatsDto;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 
-@Slf4j
-@Component
+@Service
 public class StatsClient {
-    private final WebClient webClient;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final RestTemplate restTemplate;
 
-    public StatsClient(@Value("${stats-server.url:http://localhost:9090}") String serverUrl) {
-        this.webClient = WebClient.builder()
-                .baseUrl(serverUrl)
+    public StatsClient(@Value("${stats-server.url:http://localhost:9090}") String serverUrl,
+                       RestTemplateBuilder builder) {
+        this.restTemplate = builder
+                .uriTemplateHandler(new DefaultUriBuilderFactory(serverUrl))
                 .build();
     }
 
-    public void saveHit(String app, String uri, String ip, LocalDateTime timestamp) {
-        EndpointHit hit = EndpointHit.builder()
-                .app(app)
-                .uri(uri)
-                .ip(ip)
-                .timestamp(timestamp)
-                .build();
-
-        webClient.post()
-                .uri("/hit")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(hit)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .doOnError(error -> log.error("Error saving hit: {}", error.getMessage()))
-                .onErrorResume(error -> Mono.empty())
-                .subscribe();
+    public ResponseEntity<Object> saveHit(EndpointHitDto hitDto) {
+        return restTemplate.postForEntity("/hit", hitDto, Object.class);
     }
 
-    public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
-        StringBuilder uriBuilder = new StringBuilder("/stats?start=")
-                .append(encode(start.format(FORMATTER)))
-                .append("&end=")
-                .append(encode(end.format(FORMATTER)));
-
+    public ResponseEntity<List<ViewStatsDto>> getStats(LocalDateTime start, LocalDateTime end,
+                                                       List<String> uris, Boolean unique) {
+        StringBuilder url = new StringBuilder("/stats?start=")
+                .append(start.format(FORMATTER))
+                .append("&end=").append(end.format(FORMATTER))
+                .append("&unique=").append(unique);
         if (uris != null && !uris.isEmpty()) {
-            uriBuilder.append("&uris=").append(String.join(",", uris));
+            for (String uri : uris) {
+                url.append("&uris=").append(uri);
+            }
         }
-
-        if (unique != null && unique) {
-            uriBuilder.append("&unique=true");
-        }
-
-        return webClient.get()
-                .uri(uriBuilder.toString())
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<List<ViewStats>>() {})
-                .block();
-    }
-
-    private String encode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+        ViewStatsDto[] response = restTemplate.getForObject(url.toString(), ViewStatsDto[].class);
+        return ResponseEntity.ok(response != null ? Arrays.asList(response) : List.of());
     }
 }
