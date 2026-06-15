@@ -36,3 +36,25 @@ services:
 
 volumes:
   stats-db-data:
+ewm-service:
+    build: ./ewm-service
+    container_name: ewm-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      stats-server:
+        condition: service_healthy
+      stats-db:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - STATS_SERVER_URL=http://stats-server:9090
+      - TZ=Europe/Moscow
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  stats-db-data:
