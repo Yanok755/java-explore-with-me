@@ -34,9 +34,7 @@ services:
       timeout: 5s
       retries: 10
 
-volumes:
-  stats-db-data:
-ewm-service:
+  ewm-service:
     build: ./ewm-service
     container_name: ewm-service
     ports:
@@ -56,5 +54,6 @@ ewm-service:
       timeout: 5s
       retries: 5
 
+# ТОЛЬКО ОДИН БЛОК volumes (объединенный)
 volumes:
   stats-db-data:
