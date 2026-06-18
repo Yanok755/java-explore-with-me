@@ -68,8 +68,7 @@ public class CompilationService {
             }
         }
 
-        Compilation updated = compilationRepository.save(compilation);
-        return compilationMapper.toDto(updated, Collections.emptyMap());
+        return compilationMapper.toDto(compilation, Collections.emptyMap());
     }
 
     @Transactional
