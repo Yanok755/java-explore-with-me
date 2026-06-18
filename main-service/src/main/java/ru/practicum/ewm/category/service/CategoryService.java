@@ -46,8 +46,8 @@ public class CategoryService {
             category.setName(dto.getName());
         }
         try {
-            Category updated = categoryRepository.save(category);
-            return categoryMapper.toDto(updated);
+            categoryRepository.flush();
+            return categoryMapper.toDto(category);
         } catch (DataIntegrityViolationException e) {
             throw new ConflictException("Integrity constraint has been violated: category name must be unique");
         }
