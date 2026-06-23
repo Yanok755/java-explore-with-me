@@ -92,7 +92,31 @@ public class ErrorHandler {
                 .status(HttpStatus.BAD_REQUEST.name())
                 .reason("Incorrectly made request.")
                 .message(String.format("Parameter %s must be of type %s",
-                        e.getName(), e.getRequiredType().getSimpleName()))
+                        e.getName(), e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : null))
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
+        log.warn("400: {}", e.getMessage());
+        return ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.name())
+                .reason("Incorrectly made request.")
+                .message("Required request body is missing")
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMissingParam(MissingServletRequestParameterException e) {
+        log.warn("400: {}", e.getMessage());
+        return ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.name())
+                .reason("Incorrectly made request.")
+                .message(String.format("Required request parameter '%s' is not present", e.getParameterName()))
                 .timestamp(LocalDateTime.now())
                 .build();
     }
@@ -105,32 +129,6 @@ public class ErrorHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.name())
                 .reason("Unexpected error.")
                 .message(e.getMessage())
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
-
-    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
-        log.warn("400: {}", e.getMessage());
-        return ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.name())
-                .reason("Incorrectly made request.")
-                .message("Required request body is missing")
-                .timestamp(LocalDateTime.now())
-                .build();
-
-
-    }
-
-    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleMissingParam(MissingServletRequestParameterException e) {
-        log.warn("400: {}", e.getMessage());
-        return ErrorResponse.builder()
-                .status(HttpStatus.BAD_REQUEST.name())
-                .reason("Incorrectly made request.")
-                .message(String.format("Required request parameter '%s' is not present", e.getParameterName()))
                 .timestamp(LocalDateTime.now())
                 .build();
     }
