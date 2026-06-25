@@ -136,4 +136,4 @@ mvn clean install
 ```
 
 ## Ссылка на Pull Request
-[feature_comments → main](https://github.com/Varvara-Kornilova/java-explore-with-me/pull/5)
+[feature_comments → main](https://github.com/Yanok755/java-explore-with-me/pull/9)
